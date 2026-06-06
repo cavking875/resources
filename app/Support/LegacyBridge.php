@@ -8,12 +8,29 @@ use App\Database\ConnectionFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDO;
+use RuntimeException;
 
 final class LegacyBridge
 {
     public static function requireLegacy(string $relativePath): void
     {
-        $legacyRoot = dirname(__DIR__, 3) . '/src';
+        $candidates = [
+            dirname(__DIR__, 2) . '/src',
+            dirname(__DIR__, 3) . '/src',
+        ];
+
+        $legacyRoot = null;
+        foreach ($candidates as $candidate) {
+            if (is_dir($candidate)) {
+                $legacyRoot = $candidate;
+                break;
+            }
+        }
+
+        if ($legacyRoot === null) {
+            throw new RuntimeException('Legacy source directory not found.');
+        }
+
         require_once $legacyRoot . '/' . ltrim($relativePath, '/');
     }
 
