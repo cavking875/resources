@@ -13,6 +13,14 @@ use App\Http\Controllers\Api\SettingsAuditController;
 use App\Http\Controllers\Api\StaffAllocationsController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return response()->json([
+        'service' => 'resource-planner-ai',
+        'status' => 'ok',
+        'health' => '/api/health',
+    ]);
+});
+
 Route::get('/health', [HealthController::class, 'show']);
 
 Route::prefix('auth')->group(function (): void {
