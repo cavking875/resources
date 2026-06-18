@@ -35,9 +35,15 @@ class BehaviorViewModel(private val dao: BehaviorDao) : ViewModel() {
         repository.insertIncident(incident)
     }
 
+    fun updateIncident(incident: BehaviorIncident) = viewModelScope.launch {
+        repository.updateIncident(incident)
+    }
+
     fun deleteIncident(incident: BehaviorIncident) = viewModelScope.launch {
         repository.deleteIncident(incident)
     }
+
+    suspend fun getIncidentById(id: Int): BehaviorIncident? = repository.getIncidentById(id)
 }
 
 class BehaviorViewModelFactory(private val dao: BehaviorDao) : ViewModelProvider.Factory {

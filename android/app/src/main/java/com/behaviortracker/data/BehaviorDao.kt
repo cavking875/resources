@@ -11,6 +11,9 @@ interface BehaviorDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIncident(incident: BehaviorIncident)
 
+    @Update
+    suspend fun updateIncident(incident: BehaviorIncident)
+
     @Delete
     suspend fun deleteIncident(incident: BehaviorIncident)
 

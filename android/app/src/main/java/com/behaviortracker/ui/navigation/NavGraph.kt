@@ -14,7 +14,10 @@ import com.behaviortracker.ui.viewmodel.BehaviorViewModel
 
 sealed class Screen(val route: String) {
     object List : Screen("list")
-    object Add : Screen("add")
+    object Add : Screen("add?id={id}") {
+        fun forNew() = "add"
+        fun forEdit(id: Int) = "add?id=$id"
+    }
     object Insights : Screen("insights")
 }
 
@@ -32,12 +35,23 @@ fun NavGraph(
         composable(Screen.List.route) {
             IncidentListScreen(
                 viewModel = viewModel,
-                onAddClick = { navController.navigate(Screen.Add.route) }
+                onAddClick = { navController.navigate(Screen.Add.forNew()) },
+                onEditClick = { id -> navController.navigate(Screen.Add.forEdit(id)) }
             )
         }
-        composable(Screen.Add.route) {
+        composable(
+            route = Screen.Add.route,
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            )
+        ) { backStack ->
+            val editId = backStack.arguments?.getInt("id")?.takeIf { it != -1 }
             AddIncidentScreen(
                 viewModel = viewModel,
+                editIncidentId = editId,
                 onBack = { navController.popBackStack() }
             )
         }

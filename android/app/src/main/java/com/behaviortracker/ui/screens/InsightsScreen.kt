@@ -1,17 +1,23 @@
 package com.behaviortracker.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.behaviortracker.data.IncidentContext
 import com.behaviortracker.ui.viewmodel.BehaviorViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,6 +25,7 @@ fun InsightsScreen(viewModel: BehaviorViewModel) {
     val contextCounts by viewModel.contextCounts.collectAsStateWithLifecycle()
     val allIncidents by viewModel.allIncidents.collectAsStateWithLifecycle()
     val total = allIncidents.size
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -27,7 +34,24 @@ fun InsightsScreen(viewModel: BehaviorViewModel) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                ),
+                actions = {
+                    if (total > 0) {
+                        IconButton(onClick = {
+                            val text = buildInsightsSummary(contextCounts, total)
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Behaviour Patterns Summary")
+                                putExtra(Intent.EXTRA_TEXT, text)
+                            }
+                            context.startActivity(
+                                Intent.createChooser(intent, "Share Insights Summary")
+                            )
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share summary")
+                        }
+                    }
+                }
             )
         }
     ) { padding ->
@@ -55,8 +79,7 @@ fun InsightsScreen(viewModel: BehaviorViewModel) {
                 item {
                     Text(
                         text = "$total incident${if (total == 1) "" else "s"} logged",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground
+                        style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
@@ -73,28 +96,19 @@ fun InsightsScreen(viewModel: BehaviorViewModel) {
                 if (sorted.isEmpty()) {
                     item {
                         Text(
-                            text = "No context data to show yet.",
+                            text = "No context data to display yet.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 } else {
                     val maxCount = sorted.first().value.coerceAtLeast(1)
-
                     items(sorted) { (ctx, count) ->
-                        ContextBar(
-                            context = ctx,
-                            count = count,
-                            total = total,
-                            maxCount = maxCount
-                        )
+                        ContextBar(context = ctx, count = count, total = total, maxCount = maxCount)
                     }
                 }
 
-                item {
-                    Spacer(Modifier.height(8.dp))
-                    PatternSummary(contextCounts = contextCounts, total = total)
-                }
+                item { PatternSummary(contextCounts = contextCounts, total = total) }
             }
         }
     }
@@ -120,10 +134,7 @@ private fun ContextBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = context.label,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = context.label, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = "$count ($percentage%)",
                     style = MaterialTheme.typography.labelLarge,
@@ -148,8 +159,8 @@ private fun PatternSummary(
     contextCounts: Map<IncidentContext, Int>,
     total: Int
 ) {
-    val topContext = contextCounts.maxByOrNull { it.value }
-    if (topContext == null || topContext.value == 0) return
+    val topContext = contextCounts.maxByOrNull { it.value } ?: return
+    if (topContext.value == 0) return
 
     val topPercent = topContext.value * 100 / total.coerceAtLeast(1)
 
@@ -167,7 +178,7 @@ private fun PatternSummary(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "${topContext.key.label} appears in $topPercent% of incidents",
+                text = "${topContext.key.label} — $topPercent% of incidents",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -177,6 +188,33 @@ private fun PatternSummary(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
+        }
+    }
+}
+
+private fun buildInsightsSummary(
+    contextCounts: Map<IncidentContext, Int>,
+    total: Int
+): String {
+    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    return buildString {
+        appendLine("BEHAVIOUR PATTERNS SUMMARY")
+        appendLine("Generated: ${dateFormat.format(Date())}")
+        appendLine("Total incidents on record: $total")
+        appendLine()
+        appendLine("Breakdown by context:")
+        contextCounts.entries
+            .sortedByDescending { it.value }
+            .filter { it.value > 0 }
+            .forEach { (ctx, count) ->
+                val pct = count * 100 / total
+                appendLine("  ${ctx.label}: $count incident${if (count == 1) "" else "s"} ($pct%)")
+            }
+        appendLine()
+        val top = contextCounts.maxByOrNull { it.value }
+        if (top != null && top.value > 0) {
+            val pct = top.value * 100 / total
+            appendLine("Most frequent: ${top.key.label} ($pct% of incidents)")
         }
     }
 }
