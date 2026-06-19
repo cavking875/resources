@@ -3,6 +3,7 @@
 package com.behaviortracker.ui.screens
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -23,11 +25,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.behaviortracker.data.BehaviorIncident
 import com.behaviortracker.data.IncidentContext
+import com.behaviortracker.ui.theme.SeverityHigh
+import com.behaviortracker.ui.theme.SeverityLow
+import com.behaviortracker.ui.theme.SeverityMild
+import com.behaviortracker.ui.theme.SeverityMod
+import com.behaviortracker.ui.theme.SeveritySevere
 import com.behaviortracker.ui.viewmodel.BehaviorViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncidentListScreen(
     viewModel: BehaviorViewModel,
@@ -42,10 +48,10 @@ fun IncidentListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Behaviour Log") },
+                title = { Text("Behaviour Log", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
                     if (allIncidents.isNotEmpty()) {
@@ -65,37 +71,28 @@ fun IncidentListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Log incident")
-            }
+            ExtendedFloatingActionButton(
+                onClick = onAddClick,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Log incident") }
+            )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+            if (allIncidents.isNotEmpty()) {
+                StatsHeader(incidents = allIncidents)
+            }
             ContextFilterRow(
                 selectedContext = filterContext,
                 onFilterSelected = { viewModel.setFilter(it) }
             )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             if (incidents.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (filterContext == null)
-                            "No incidents logged yet.\nTap + to add one."
-                        else
-                            "No incidents match this filter.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                EmptyState(hasFilter = filterContext != null)
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(incidents, key = { it.id }) { incident ->
@@ -105,8 +102,79 @@ fun IncidentListScreen(
                             onDelete = { viewModel.deleteIncident(incident) }
                         )
                     }
+                    // Space for FAB
+                    item { Spacer(Modifier.height(80.dp)) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun StatsHeader(incidents: List<BehaviorIncident>) {
+    val dateFormat = remember { SimpleDateFormat("d MMM", Locale.getDefault()) }
+    val lastDate = remember(incidents) {
+        incidents.maxByOrNull { it.timestamp }?.let { dateFormat.format(Date(it.timestamp)) }
+    }
+    val avgSeverity = remember(incidents) {
+        incidents.sumOf { it.severity }.toFloat() / incidents.size
+    }
+
+    Surface(color = MaterialTheme.colorScheme.primaryContainer) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp)
+        ) {
+            QuickStat(label = "TOTAL", value = "${incidents.size}")
+            if (lastDate != null) QuickStat(label = "LAST", value = lastDate)
+            QuickStat(label = "AVG SEVERITY", value = "%.1f / 5".format(avgSeverity))
+        }
+    }
+}
+
+@Composable
+private fun QuickStat(label: String, value: String) {
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+@Composable
+private fun EmptyState(hasFilter: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(40.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = if (hasFilter) "No incidents match\nthis filter" else "Nothing logged yet",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = if (hasFilter)
+                    "Try selecting a different filter or All."
+                else
+                    "Tap the button below to log the first incident.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -117,7 +185,7 @@ private fun ContextFilterRow(
     onFilterSelected: (IncidentContext?) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
@@ -127,11 +195,11 @@ private fun ContextFilterRow(
                 label = { Text("All") }
             )
         }
-        items(IncidentContext.entries) { context ->
+        items(IncidentContext.entries) { ctx ->
             FilterChip(
-                selected = selectedContext == context,
-                onClick = { onFilterSelected(context) },
-                label = { Text(context.label) }
+                selected = selectedContext == ctx,
+                onClick = { onFilterSelected(ctx) },
+                label = { Text(ctx.label) }
             )
         }
     }
@@ -144,12 +212,14 @@ fun IncidentCard(
     onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val dateFormat = remember { SimpleDateFormat("dd MMM yyyy  HH:mm", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault()) }
+    val sevColor = severityColor(incident.severity)
+    val sevLabel = severityLabel(incident.severity)
 
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete incident?") },
+            title = { Text("Delete this incident?") },
             text = { Text("This cannot be undone.") },
             confirmButton = {
                 TextButton(onClick = { onDelete(); showDeleteDialog = false }) {
@@ -162,117 +232,126 @@ fun IncidentCard(
         )
     }
 
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onEdit() },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            // Severity strip
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(sevColor)
+            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                // Header row: date + severity badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = dateFormat.format(Date(incident.timestamp)),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = incident.description,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-            SeverityIndicator(severity = incident.severity)
-
-            val contextList = incident.contextList()
-            if (contextList.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    contextList.forEach { ctx ->
-                        SuggestionChip(
-                            onClick = {},
-                            label = { Text(ctx.label, style = MaterialTheme.typography.labelSmall) }
+                    Surface(
+                        color = sevColor.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text(
+                            text = sevLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = sevColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 }
-            }
 
-            if (incident.people.isNotBlank()) {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "People: ${incident.people}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (incident.notes.isNotBlank()) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = incident.notes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    text = incident.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
+                )
+
+                val contextList = incident.contextList()
+                if (contextList.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        contextList.forEach { ctx ->
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text(ctx.label, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                }
+
+                if (incident.people.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "People: ${incident.people}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (incident.notes.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = incident.notes,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.align(Alignment.Top)
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.45f),
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
     }
 }
 
-@Composable
-private fun SeverityIndicator(severity: Int) {
-    val label = when (severity) {
-        1 -> "Mild"; 2 -> "Low"; 3 -> "Moderate"; 4 -> "High"; 5 -> "Severe"
-        else -> "Unknown"
-    }
-    val color = when (severity) {
-        1 -> MaterialTheme.colorScheme.tertiary
-        2 -> MaterialTheme.colorScheme.secondary
-        3 -> MaterialTheme.colorScheme.primary
-        4 -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-        5 -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.outline
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Text(
-            text = "Severity:",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        repeat(5) { i ->
-            Surface(
-                modifier = Modifier.size(10.dp),
-                shape = MaterialTheme.shapes.extraSmall,
-                color = if (i < severity) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-            ) {}
-        }
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = color)
-    }
+internal fun severityColor(severity: Int): Color = when (severity) {
+    1 -> SeverityMild
+    2 -> SeverityLow
+    3 -> SeverityMod
+    4 -> SeverityHigh
+    5 -> SeveritySevere
+    else -> Color.Gray
+}
+
+internal fun severityLabel(severity: Int): String = when (severity) {
+    1 -> "Mild"
+    2 -> "Low"
+    3 -> "Moderate"
+    4 -> "High"
+    5 -> "Severe"
+    else -> "?"
 }
 
 private fun buildExportText(incidents: List<BehaviorIncident>): String {
@@ -283,13 +362,11 @@ private fun buildExportText(incidents: List<BehaviorIncident>): String {
         appendLine("Total incidents: ${incidents.size}")
         appendLine("=".repeat(50))
         appendLine()
-
         incidents.forEach { incident ->
             appendLine("Date:       ${dateFormat.format(Date(incident.timestamp))}")
-            appendLine("Severity:   ${incident.severity}/5")
+            appendLine("Severity:   ${incident.severity}/5 (${severityLabel(incident.severity)})")
             if (incident.contexts.isNotBlank()) {
-                val ctxLabels = incident.contextList().joinToString(", ") { it.label }
-                appendLine("Context:    $ctxLabels")
+                appendLine("Context:    ${incident.contextList().joinToString(", ") { it.label }}")
             }
             if (incident.people.isNotBlank()) {
                 appendLine("People:     ${incident.people}")

@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -35,6 +37,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private data class NavItem(
+    val screen: Screen,
+    val label: String,
+    val selectedIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    val unselectedIcon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
 @Composable
 fun AppRoot() {
     val navController = rememberNavController()
@@ -43,9 +52,9 @@ fun AppRoot() {
         factory = BehaviorViewModelFactory(app.database.behaviorDao())
     )
 
-    val bottomNavItems = listOf(
-        Screen.List to Pair("Log", Icons.Default.Home),
-        Screen.Insights to Pair("Insights", Icons.Default.Insights)
+    val navItems = listOf(
+        NavItem(Screen.List, "Log", Icons.Filled.Home, Icons.Outlined.Home),
+        NavItem(Screen.Insights, "Insights", Icons.Filled.Insights, Icons.Outlined.Insights)
     )
 
     Scaffold(
@@ -53,26 +62,32 @@ fun AppRoot() {
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
-            val showBottomBar = bottomNavItems.any { (screen, _) ->
-                currentDestination?.hierarchy?.any { it.route == screen.route } == true
+            val showBottomBar = navItems.any { item ->
+                currentDestination?.hierarchy?.any { it.route == item.screen.route } == true
             }
             if (showBottomBar) {
                 NavigationBar {
-                    bottomNavItems.forEach { (screen, meta) ->
-                        val (label, icon) = meta
+                    navItems.forEach { item ->
+                        val isSelected = currentDestination?.hierarchy
+                            ?.any { it.route == item.screen.route } == true
                         NavigationBarItem(
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            selected = isSelected,
                             onClick = {
-                                navController.navigate(screen.route) {
+                                navController.navigate(item.screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            label = { Text(item.label) }
                         )
                     }
                 }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+
 package com.behaviortracker.ui.screens
 
 import androidx.compose.foundation.clickable
@@ -7,21 +9,26 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.behaviortracker.data.BehaviorIncident
 import com.behaviortracker.data.IncidentContext
+import com.behaviortracker.ui.theme.SeverityHigh
+import com.behaviortracker.ui.theme.SeverityLow
+import com.behaviortracker.ui.theme.SeverityMild
+import com.behaviortracker.ui.theme.SeverityMod
+import com.behaviortracker.ui.theme.SeveritySevere
 import com.behaviortracker.ui.viewmodel.BehaviorViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddIncidentScreen(
     viewModel: BehaviorViewModel,
@@ -38,14 +45,11 @@ fun AddIncidentScreen(
     var people by remember { mutableStateOf("") }
     var incidentTimestamp by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var originalIncident by remember { mutableStateOf<BehaviorIncident?>(null) }
-
     var loaded by remember { mutableStateOf(!isEditMode) }
 
-    // Load existing incident in edit mode
     LaunchedEffect(editIncidentId) {
         if (editIncidentId != null) {
-            val incident = viewModel.getIncidentById(editIncidentId)
-            if (incident != null) {
+            viewModel.getIncidentById(editIncidentId)?.let { incident ->
                 originalIncident = incident
                 description = incident.description
                 severity = incident.severity
@@ -61,12 +65,10 @@ fun AddIncidentScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    val dateFormat = remember { SimpleDateFormat("EEE dd MMM yyyy", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("EEE d MMM yyyy", Locale.getDefault()) }
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = incidentTimestamp
-    )
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = incidentTimestamp)
     val timePickerState = run {
         val cal = Calendar.getInstance().apply { timeInMillis = incidentTimestamp }
         rememberTimePickerState(
@@ -83,10 +85,10 @@ fun AddIncidentScreen(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { selectedMs ->
                         val cal = Calendar.getInstance().apply { timeInMillis = incidentTimestamp }
-                        val selectedCal = Calendar.getInstance().apply { timeInMillis = selectedMs }
-                        cal.set(Calendar.YEAR, selectedCal.get(Calendar.YEAR))
-                        cal.set(Calendar.MONTH, selectedCal.get(Calendar.MONTH))
-                        cal.set(Calendar.DAY_OF_MONTH, selectedCal.get(Calendar.DAY_OF_MONTH))
+                        val sel = Calendar.getInstance().apply { timeInMillis = selectedMs }
+                        cal.set(Calendar.YEAR, sel.get(Calendar.YEAR))
+                        cal.set(Calendar.MONTH, sel.get(Calendar.MONTH))
+                        cal.set(Calendar.DAY_OF_MONTH, sel.get(Calendar.DAY_OF_MONTH))
                         incidentTimestamp = cal.timeInMillis
                     }
                     showDatePicker = false
@@ -126,62 +128,60 @@ fun AddIncidentScreen(
 
     val canSave = loaded && description.isNotBlank() && selectedContexts.isNotEmpty()
 
+    fun save() {
+        scope.launch {
+            val incident = if (isEditMode && originalIncident != null) {
+                originalIncident!!.copy(
+                    description = description.trim(),
+                    severity = severity,
+                    contexts = BehaviorIncident.contextsToString(selectedContexts),
+                    notes = notes.trim(),
+                    people = people.trim(),
+                    timestamp = incidentTimestamp
+                )
+            } else {
+                BehaviorIncident(
+                    description = description.trim(),
+                    severity = severity,
+                    contexts = BehaviorIncident.contextsToString(selectedContexts),
+                    notes = notes.trim(),
+                    people = people.trim(),
+                    timestamp = incidentTimestamp
+                )
+            }
+            if (isEditMode) viewModel.updateIncident(incident)
+            else viewModel.addIncident(incident)
+            onBack()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isEditMode) "Edit Incident" else "Log Incident") },
+                title = { Text(if (isEditMode) "Edit incident" else "Log incident") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                val incident = if (isEditMode && originalIncident != null) {
-                                    originalIncident!!.copy(
-                                        description = description.trim(),
-                                        severity = severity,
-                                        contexts = BehaviorIncident.contextsToString(selectedContexts),
-                                        notes = notes.trim(),
-                                        people = people.trim(),
-                                        timestamp = incidentTimestamp
-                                    )
-                                } else {
-                                    BehaviorIncident(
-                                        description = description.trim(),
-                                        severity = severity,
-                                        contexts = BehaviorIncident.contextsToString(selectedContexts),
-                                        notes = notes.trim(),
-                                        people = people.trim(),
-                                        timestamp = incidentTimestamp
-                                    )
-                                }
-                                if (isEditMode) viewModel.updateIncident(incident)
-                                else viewModel.addIncident(incident)
-                                onBack()
-                            }
-                        },
-                        enabled = canSave
+                    Button(
+                        onClick = { save() },
+                        enabled = canSave,
+                        modifier = Modifier.padding(end = 8.dp)
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Save")
+                        Text("Save")
                     }
                 }
             )
         }
     ) { padding ->
         if (!loaded) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else {
@@ -189,134 +189,169 @@ fun AddIncidentScreen(
                 modifier = Modifier
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Date & time pickers
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showDatePicker = true }
+                // Section: When
+                FormSection(title = "When did this happen?") {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        OutlinedCard(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showDatePicker = true }
                         ) {
-                            Icon(
-                                Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Column {
-                                Text("Date", style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(dateFormat.format(Date(incidentTimestamp)),
-                                    style = MaterialTheme.typography.bodySmall)
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column {
+                                    Text(
+                                        "Date",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        dateFormat.format(Date(incidentTimestamp)),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
                             }
                         }
-                    }
-                    OutlinedCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showTimePicker = true }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        OutlinedCard(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showTimePicker = true }
                         ) {
-                            Icon(
-                                Icons.Default.Schedule,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Column {
-                                Text("Time", style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(timeFormat.format(Date(incidentTimestamp)),
-                                    style = MaterialTheme.typography.bodySmall)
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column {
+                                    Text(
+                                        "Time",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        timeFormat.format(Date(incidentTimestamp)),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("What happened? *") },
-                    placeholder = { Text("Describe the behaviour…") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 6
-                )
+                // Section: What happened
+                FormSection(title = "What happened? *") {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        placeholder = { Text("Describe the behaviour…") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 6
+                    )
+                }
 
-                SectionLabel("When / context *")
-                Text(
-                    text = "Select all that apply",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                ContextSelector(
-                    selectedContexts = selectedContexts,
-                    onToggle = { ctx ->
-                        selectedContexts = if (ctx in selectedContexts)
-                            selectedContexts - ctx else selectedContexts + ctx
-                    }
-                )
+                // Section: Context
+                FormSection(
+                    title = "Context *",
+                    subtitle = "Select everything that applies"
+                ) {
+                    ContextSelector(
+                        selectedContexts = selectedContexts,
+                        onToggle = { ctx ->
+                            selectedContexts = if (ctx in selectedContexts)
+                                selectedContexts - ctx else selectedContexts + ctx
+                        }
+                    )
+                }
 
-                SectionLabel("Severity")
-                SeveritySelector(severity = severity, onSeverityChange = { severity = it })
+                // Section: Severity
+                FormSection(title = "How severe was it?") {
+                    ColoredSeveritySelector(
+                        severity = severity,
+                        onSeverityChange = { severity = it }
+                    )
+                }
 
-                OutlinedTextField(
-                    value = people,
-                    onValueChange = { people = it },
-                    label = { Text("Who was involved / present?") },
-                    placeholder = { Text("e.g. Mum, teacher, stepdad…") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                // Section: Details
+                FormSection(title = "Who was involved?") {
+                    OutlinedTextField(
+                        value = people,
+                        onValueChange = { people = it },
+                        placeholder = { Text("e.g. Mum, teacher, stepdad…") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
 
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Additional notes / possible reasons") },
-                    placeholder = { Text("Triggers, what preceded it, how it resolved…") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 8
-                )
+                FormSection(title = "Notes & possible triggers") {
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        placeholder = { Text("What led up to this? How did it resolve?") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 8
+                    )
+                }
 
-                if (!canSave && loaded) {
+                if (!canSave) {
                     Text(
-                        text = "* Description and at least one context are required.",
+                        text = "* Description and at least one context are required to save.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                Spacer(Modifier.height(80.dp))
+                Spacer(Modifier.height(60.dp))
             }
         }
     }
 }
 
 @Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onBackground
-    )
+private fun FormSection(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        content()
+    }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ContextSelector(
     selectedContexts: Set<IncidentContext>,
@@ -337,19 +372,39 @@ private fun ContextSelector(
 }
 
 @Composable
-private fun SeveritySelector(severity: Int, onSeverityChange: (Int) -> Unit) {
-    val labels = listOf("Mild", "Low", "Moderate", "High", "Severe")
+private fun ColoredSeveritySelector(severity: Int, onSeverityChange: (Int) -> Unit) {
+    val items = listOf(
+        Triple(1, "Mild", SeverityMild),
+        Triple(2, "Low", SeverityLow),
+        Triple(3, "Moderate", SeverityMod),
+        Triple(4, "High", SeverityHigh),
+        Triple(5, "Severe", SeveritySevere)
+    )
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        labels.forEachIndexed { index, label ->
-            FilterChip(
-                selected = severity == index + 1,
-                onClick = { onSeverityChange(index + 1) },
-                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                modifier = Modifier.weight(1f)
-            )
+        items.forEach { (level, label, color) ->
+            val selected = severity == level
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onSeverityChange(level) },
+                color = if (selected) color else color.copy(alpha = 0.12f),
+                shape = MaterialTheme.shapes.small
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (selected) Color.White else color,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }
