@@ -20,19 +20,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Gradle 8.6
+      - name: Install Gradle 8.9
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-8.6/bin" >> $GITHUB_PATH
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle-dist
+          echo "/opt/gradle-dist/gradle-8.9/bin" >> $GITHUB_PATH
 
-      - name: Generate Gradle wrapper
-        working-directory: android
-        run: gradle wrapper
+      - name: Show versions
+        run: |
+          gradle --version
+          echo "ANDROID_HOME=$ANDROID_HOME"
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

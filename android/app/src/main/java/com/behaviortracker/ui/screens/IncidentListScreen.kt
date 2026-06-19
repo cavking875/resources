@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+
 package com.behaviortracker.ui.screens
 
 import android.content.Intent
@@ -203,7 +205,6 @@ fun IncidentCard(
             val contextList = incident.contextList()
             if (contextList.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
-                @OptIn(ExperimentalLayoutApi::class)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
