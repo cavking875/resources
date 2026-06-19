@@ -29,14 +29,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BehaviourTrackerTheme {
-                BehaviourTrackerApp()
+                AppRoot()
             }
         }
     }
 }
 
 @Composable
-fun BehaviourTrackerApp() {
+fun AppRoot() {
     val navController = rememberNavController()
     val app = androidx.compose.ui.platform.LocalContext.current.applicationContext as BehaviourTrackerApp
     val viewModel: BehaviorViewModel = viewModel(
