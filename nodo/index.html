@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b1020" />
+<title>NODO — 3D Spatial Puzzle Lab</title>
+<style>
+:root{--bg:#080d1b;--panel:#10182b;--raised:#182339;--stroke:#2a3953;--muted:#8e9bb4;--text:#eef4ff;--accent:#8bf0d2;--gold:#f7c77a;--error:#ff7888;--shadow:0 18px 50px #0005}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{background:radial-gradient(ellipse at 59% -18%,#22344d 0%,#0b1224 40%,#080d1b 80%)}button,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.app{min-height:100vh;max-width:1650px;margin:0 auto;display:flex;flex-direction:column}.top{min-height:80px;display:flex;align-items:center;justify-content:space-between;padding:17px 30px;border-bottom:1px solid #ffffff13;gap:16px}.brand{display:flex;align-items:center;gap:13px}.brandMark{width:42px;height:42px;border:1px solid #8bf0d25c;background:linear-gradient(135deg,#294d62,#172943);border-radius:14px;display:grid;place-items:center;box-shadow:0 0 30px #8bf0d21c}.brandMark svg{width:30px}.brandText{display:flex;flex-direction:column;line-height:1.07}.brandText strong{font-size:23px;letter-spacing:.21em;font-weight:850}.brandText span{font-size:10px;color:#9cb0c7;letter-spacing:.16em;text-transform:uppercase;margin-top:6px}.topRight{display:flex;align-items:center;gap:11px}.smallTag{border:1px solid #ffffff28;border-radius:99px;color:#9ab3ca;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:9px 13px}.btn{color:var(--text);background:#1d2b43;border:1px solid #34445e;border-radius:12px;padding:11px 16px;font-weight:650;font-size:13px;transition:background .2s,border-color .2s}.btn:hover{background:#2a3b56;border-color:#6f86a3}.btn.primary{background:var(--accent);border-color:var(--accent);color:#07302b}.btn.primary:hover{background:#b9ffea}.btn.ghost{background:transparent}.btn:disabled{opacity:.38;cursor:not-allowed}.btn svg{width:16px;height:16px;vertical-align:middle;margin-right:5px}.shell{flex:1;min-height:0;display:grid;grid-template-columns:252px minmax(360px,1fr) 260px;gap:0}.sidebar{padding:27px 16px 22px 21px;border-right:1px solid #ffffff13}.sidebarTitle,.sideTitle{font-size:11px;color:#71839e;font-weight:850;letter-spacing:.18em;text-transform:uppercase;margin-bottom:17px}.subtle{font-size:12px;color:var(--muted);line-height:1.6}.filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}.filter{border-radius:9px;border:1px solid transparent;background:transparent;color:#91a1b9;font-size:11px;font-weight:800;padding:7px 9px}.filter.active{background:#264354;color:#b6ffe9;border-color:#4b6e75}.levelList{display:flex;flex-direction:column;gap:6px}.level{border:1px solid transparent;background:transparent;border-radius:12px;text-align:left;width:100%;padding:11px 11px 11px 13px;color:var(--text);display:flex;gap:12px;align-items:center}.level:hover{background:#17243a}.level.active{background:linear-gradient(105deg,#203f49 0%,#1b3045 100%);border-color:#466b69;box-shadow:inset 3px 0 var(--accent)}.levelIcon{width:37px;height:37px;display:grid;place-items:center;border-radius:10px;background:#253449;color:#9ab3cb;font-size:21px;flex-shrink:0;font-weight:600}.level.active .levelIcon{background:#3c685f;color:#bffff0}.levelName{display:block;font-weight:750;font-size:13px;white-space:nowrap}.levelMeta{display:block;font-size:11px;color:#8c9bb0;margin-top:4px}.levelCopy{flex:1;min-width:0}.check{font-size:13px;color:var(--accent);font-weight:800}.sideFoot{border-top:1px solid #ffffff16;margin-top:28px;padding-top:20px;font-size:11px;color:#7487a2;line-height:1.65}
+.game{display:flex;flex-direction:column;min-width:0;padding:26px 19px 21px}.gameHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:15px}.eyebrow{color:var(--accent);font-size:11px;font-weight:850;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}.gameHead h1{font-size:clamp(23px,2.7vw,34px);letter-spacing:-.04em;line-height:1.08;margin:0 0 7px}.gameHead p{color:#90a3bc;font-size:12px;margin:0}.difficulty{display:flex;gap:5px;flex-shrink:0;background:#121e31;border:1px solid #293c51;border-radius:12px;padding:4px}.difficulty button{border:0;background:none;color:#869bb3;padding:9px 10px;border-radius:9px;font-size:11px;font-weight:700}.difficulty button.active{color:#0c302a;background:var(--accent)}
+.stage{position:relative;flex:1;min-height:430px;border:1px solid #32435d;border-radius:20px;background:radial-gradient(ellipse at 50% 25%,#263e5a 0%,#172338 48%,#0b1527 93%);box-shadow:inset 0 0 120px #050a167a,var(--shadow);overflow:hidden;isolation:isolate}.stage::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.25;background-image:radial-gradient(#bdd2f0 0.5px,transparent 0.5px);background-size:23px 23px;mask-image:linear-gradient(180deg,transparent 12%,black 90%)}#board{width:100%;height:100%;display:block;position:absolute;inset:0;touch-action:none;cursor:grab}#board:active{cursor:grabbing}.stageTop{position:absolute;left:16px;right:16px;top:15px;z-index:1;display:flex;justify-content:space-between;gap:10px;pointer-events:none}.glass{background:#080f20bd;border:1px solid #395071a3;border-radius:11px;padding:9px 12px;backdrop-filter:blur(10px);font-size:11px;color:#b5c8db;display:flex;align-items:center;gap:7px}.glass b{color:var(--text);font-size:13px}.stageBottom{position:absolute;left:16px;bottom:14px;right:16px;z-index:1;display:flex;gap:8px;justify-content:space-between;align-items:flex-end;pointer-events:none}.stageHint{font-size:11px;color:#9cafc8;background:#0a1324b8;border:1px solid #ffffff18;padding:10px 11px;border-radius:9px;line-height:1.55;max-width:320px}.stageHint b{color:#cfe2f2}.axis{display:flex;gap:5px;align-items:center;color:#92aac2;font-size:11px;padding:10px;border:1px solid #ffffff20;background:#0c1628b8;border-radius:10px}.axis span{color:var(--accent)}.toast{position:absolute;z-index:5;left:50%;bottom:75px;transform:translateX(-50%) translateY(10px);font-weight:650;font-size:12px;line-height:1.45;max-width:min(90%,440px);text-align:center;background:#0b1928ef;border:1px solid #87dec9;color:#ddfff6;padding:11px 16px;border-radius:11px;pointer-events:none;opacity:0;transition:.2s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.bad{border-color:#ef8796;color:#ffd3d9}
+.controlPanel{margin-top:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.tool{border:1px solid #34465e;background:#17243a;color:#deebff;border-radius:10px;min-width:44px;height:41px;font-size:13px;font-weight:750;padding:0 12px}.tool:hover{background:#263752}.tool .sub{font-size:10px;font-weight:600;color:#9fb3c9}.tool:disabled{opacity:.32;cursor:not-allowed}.progressLine{height:4px;background:#25344a;border-radius:9px;margin-top:15px;overflow:hidden}.progressLine>div{height:100%;width:0;background:linear-gradient(90deg,#61cbbd,#b4fcd2);transition:width .3s}.progressMeta{display:flex;justify-content:space-between;margin-top:8px;color:#8a9ab1;font-size:11px}.progressMeta b{color:#e5f4ff}.right{padding:27px 15px 22px;border-left:1px solid #ffffff13;display:flex;flex-direction:column;min-width:0}.rightHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.rightHead .sideTitle{margin:0}.count{background:#1e3347;color:#9af9db;border-radius:99px;font-size:11px;font-weight:750;padding:5px 10px}.tray{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;overflow-y:auto;max-height: min(67vh,680px);padding:2px 2px 4px}.piece{background:#162238;border:1px solid #35445c;border-radius:14px;min-height:103px;padding:9px;position:relative;color:var(--text);text-align:left}.piece:hover{background:#1e304b;border-color:#65839d}.piece.active{outline:2px solid var(--accent);outline-offset:-2px;background:#1c3844}.piece.placed{opacity:.49}.piece.locked{opacity:.64}.pieceTop{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:850;letter-spacing:.06em}.pieceStatus{font-size:10px;color:#a3b8c5}.pieceShape{height:54px;margin:2px 0 0;position:relative;display:flex;align-items:center;justify-content:center}.pieceShape svg{width:100%;height:55px;overflow:visible}.pieceShape circle{stroke:#ffffff54;stroke-width:.7}.pieceLabel{font-size:10px;color:#94a4bc;margin-top:0}.tipBox{margin-top:auto;padding:17px 3px 0;color:#8a9db7;font-size:11px;line-height:1.65}.tipBox strong{display:block;color:#b9d2e5;margin-bottom:4px;font-size:11px}.key{display:inline-block;border:1px solid #4b5c74;border-radius:5px;min-width:21px;padding:0 4px;text-align:center;font-size:10px;color:#d7e8f8;margin:0 2px}.footer{padding:14px 30px;color:#6f809b;font-size:11px;border-top:1px solid #ffffff10;display:flex;justify-content:space-between;gap:15px}.footer span:first-child{max-width:780px}
+.modalShade{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:20px;z-index:20;backdrop-filter:blur(8px)}.modalShade.open{display:flex}.modal{border:1px solid #4a6779;border-radius:20px;background:linear-gradient(145deg,#22344a,#0f1a2b);width:min(540px,100%);box-shadow:0 30px 140px #000b;padding:28px}.modal h2{font-size:27px;margin:0 0 10px}.modal p{font-size:14px;line-height:1.8;color:#c1cddd}.modal ol{padding-left:20px;font-size:13px;line-height:2;color:#d4e0ed}.modal .row{display:flex;justify-content:flex-end;margin-top:22px}
+@media(max-width:1180px){.shell{grid-template-columns:210px minmax(350px,1fr) 215px}.sidebar{padding-left:10px;padding-right:9px}.level{padding-left:8px;gap:8px}.right{padding-left:10px;padding-right:10px}.game{padding-left:12px;padding-right:12px}.piece{min-height:94px}.stage{min-height:400px}}
+@media(max-width:900px){.shell{display:flex;flex-direction:column}.sidebar{border-right:0;border-bottom:1px solid #ffffff18;padding:14px 16px}.sidebarTitle{margin-bottom:8px}.sidebar .filters{margin-bottom:8px}.levelList{flex-direction:row;overflow:auto;padding-bottom:6px}.level{width:170px;flex:0 0 170px}.levelIcon{height:35px;width:35px}.sideFoot{display:none}.game{padding:20px 14px}.stage{height:min(67vh,600px);min-height:390px;flex:auto}.right{border-left:0;border-top:1px solid #ffffff16;padding:18px 15px 20px}.tray{grid-template-columns:repeat(6,minmax(100px,1fr));max-height:none;overflow:visible}.tipBox{display:none}.footer{padding:14px 15px}}
+@media(max-width:620px){.top{padding:13px 16px;min-height:67px}.smallTag{display:none}.brandText strong{font-size:20px}.brandMark{width:36px;height:36px}.topRight .btn{padding:9px 11px}.gameHead{flex-wrap:wrap}.difficulty{width:100%;justify-content:space-between;margin-top:4px}.difficulty button{flex:1}.stage{height:470px;min-height:390px;border-radius:14px}.stageTop{top:10px;left:10px;right:10px}.stageBottom{left:10px;right:10px;bottom:10px}.stageHint{font-size:10px;padding:7px;max-width:235px}.axis{display:none}.tray{grid-template-columns:repeat(3,minmax(90px,1fr));gap:7px}.controls{gap:5px}.tool{padding:0 10px;min-width:37px}.controlPanel{gap:9px}.footer span:last-child{display:none}}
+/* Mobile and tablet: keep the selectable pieces visible before the board. */
+@media(max-width:900px){
+.sidebar{order:0}.right{order:1;border-top:0;border-bottom:1px solid #ffffff23;padding:13px 15px}.game{order:2}
+.rightHead{margin-bottom:8px}.tray{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,90px);grid-auto-columns:112px;grid-template-columns:none;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding:3px 3px 12px;scrollbar-width:thin;scrollbar-color:#5a8c98 #172338}
+.piece{min-height:0;height:90px;padding:7px}.pieceShape{height:43px}.pieceShape svg{height:43px}.pieceLabel{font-size:9px}
+.rightHead:after{content:"Swipe pieces →";font-size:11px;color:#9bf6db;white-space:nowrap;margin-left:8px}
+}
+@media(max-width:620px){.game{padding-top:14px}.stage{height:440px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand"><div class="brandMark"><svg viewBox="0 0 40 40" fill="none"><path d="M9 28 20 9 31 28H9Z" stroke="#92f4d4" stroke-width="2.5"/><circle cx="20" cy="9" r="4" fill="#f4cc7a"/><circle cx="9" cy="28" r="4" fill="#82d8fb"/><circle cx="31" cy="28" r="4" fill="#ff8db0"/><circle cx="20" cy="28" r="4" fill="#9ff8d5"/></svg></div><div class="brandText"><strong>NODO</strong><span>3D Spatial Puzzle Lab</span></div></div>
+  <div class="topRight"><span class="smallTag">Playable • Offline • Original puzzles</span><button class="btn ghost" id="helpBtn">How to play</button><button class="btn primary" id="newBtn">↻ New puzzle</button></div>
+</header>
+<div class="shell">
+  <aside class="sidebar"><div class="sidebarTitle">Choose a layout</div><div class="filters" id="filters"></div><div class="levelList" id="levelList"></div><div class="sideFoot">Each puzzle starts from a complete, valid arrangement. Rotate the board freely to inspect every level. Completed layouts are remembered in this browser.</div></aside>
+  <main class="game"><div class="gameHead"><div><div class="eyebrow" id="category">3D // Pyramid</div><h1 id="layoutTitle">Classic Pyramid</h1><p id="subtitle">Fill every sphere position without overlaps.</p></div><div class="difficulty" id="difficulty"><button data-d="easy">Explorer</button><button data-d="medium">Standard</button><button data-d="hard">Expert</button></div></div>
+  <div class="stage" id="stage"><canvas id="board" aria-label="Interactive 3D puzzle game board"></canvas><div class="stageTop"><div class="glass">◉ <b id="filledStat">0 / 55</b> spheres</div><div class="glass">◷ <b id="timer">00:00</b></div></div><div class="toast" id="toast"></div><div class="stageBottom"><div class="stageHint"><b>Select a piece above</b>, then tap its position on the board.<br>Drag to orbit · Scroll/pinch to zoom</div><div class="axis"><span>✧</span> Interactive 3D view</div></div></div>
+  <div class="controlPanel"><div class="controls"><button class="tool" id="rotateBtn" title="Rotate selected piece (R)">↻ Rotate <span class="sub">R</span></button><button class="tool" id="mirrorBtn" title="Mirror selected piece (F)">⇄ Flip <span class="sub">F</span></button><button class="tool" id="tiltBtn" title="Tilt selected piece (T)">⤹ Tilt <span class="sub">T</span></button></div><div class="controls"><button class="tool" id="viewBtn" title="Reset the 3D camera">⌖ View</button><button class="tool" id="undoBtn" title="Undo last move (Z)">↶ Undo</button><button class="tool" id="hintBtn">✦ Hint</button><button class="tool" id="resetBtn">Reset</button></div></div>
+  <div class="progressLine"><div id="progressBar"></div></div><div class="progressMeta"><span><b id="placedCount">0</b> of <span id="totalPieces">12</span> pieces placed</span><span id="status">Select a coloured piece to start</span></div></main>
+  <aside class="right"><div class="rightHead"><div class="sideTitle">Puzzle pieces</div><span class="count" id="pieceCount">12 pieces</span></div><div class="tray" id="tray"></div><div class="tipBox"><strong>Controls</strong>Choose a piece from the tray, adjust its orientation, then click an empty socket. Select a placed piece in the tray to remove it. A dotted outline shows a valid fit.<br><br><span class="key">R</span> rotate <span class="key">F</span> flip <span class="key">T</span> tilt <span class="key">Z</span> undo</div></aside>
+</div>
+<footer class="footer"><span>Independent Kanoodle-style puzzle concept. Custom-generated, solvable challenges; not affiliated with the original manufacturer.</span><span>NODO / V1</span></footer>
+</div>
+<div class="modalShade" id="helpModal"><div class="modal"><div class="eyebrow">Guide</div><h2>How to play NODO</h2><p>Fill every empty sphere position using all the coloured connected-ball pieces. Pieces must fit inside the outline and must not overlap.</p><ol><li>Pick a layout and difficulty from the left.</li><li>Choose a coloured piece from the tray (above the board on mobile).</li><li>Rotate, flip, or tilt it, then tap a vacant position on the 3D board to snap it into place.</li><li>Drag the board to see its sides and hidden layers. Use your mouse wheel or pinch to zoom.</li><li>Tap an already placed piece in the tray to take it back. Use Hint to show a suggested location.</li><li>Fill every slot to complete the puzzle. Locked starter pieces cannot be moved.</li></ol><p>All layouts are constructed from valid arrangements, including the 55-sphere five-level pyramid.</p><div class="row"><button class="btn primary" id="closeModal">Play puzzle</button></div></div></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), canvas=$('board'), ctx=canvas.getContext('2d');
+const COLORS=['#fc756d','#69c7f7','#fed071','#a78bfa','#71dfb5','#f493c5','#f0a45e','#6e9cf5','#bddf79','#45d5cf','#e08deb','#d0dce8'];
+const LAYOUTS=[
+ {id:'starter',name:'First Steps',category:'flat',size:'4 × 4',desc:'A gentle 16-sphere warm-up',symbol:'▦'},
+ {id:'grid',name:'Classic Rectangle',category:'flat',size:'5 × 11',desc:'The full 55-sphere flat challenge',symbol:'▤'},
+ {id:'wide',name:'Longboard',category:'flat',size:'5 × 7',desc:'An intermediate flat puzzle',symbol:'▱'},
+ {id:'cross',name:'Crossroads',category:'flat',size:'33 slots',desc:'A cross-shaped silhouette',symbol:'✚'},
+ {id:'bridge',name:'The Bridge',category:'flat',size:'26 slots',desc:'Fill the span between two legs',symbol:'⋂'},
+ {id:'mini',name:'Pocket Pyramid',category:'pyramid',size:'3 levels',desc:'A 14-sphere mini pyramid',symbol:'△'},
+ {id:'medium',name:'Rising Pyramid',category:'pyramid',size:'4 levels',desc:'A 30-sphere pyramid',symbol:'△'},
+ {id:'classic',name:'Classic Pyramid',category:'pyramid',size:'5 levels',desc:'The complete 55-sphere pyramid',symbol:'△'},
+ {id:'steps',name:'Stepped Summit',category:'pyramid',size:'4 terraces',desc:'Build a 54-sphere stepped form',symbol:'▥'},
+ {id:'cube',name:'Crystal Cube',category:'sculpture',size:'3 × 3 × 3',desc:'Solve in every dimension',symbol:'⬡'},
+ {id:'tower',name:'Sky Tower',category:'sculpture',size:'4 × 4 × 3',desc:'A tall 48-sphere block',symbol:'▥'},
+ {id:'citadel',name:'Twin Citadel',category:'sculpture',size:'42 slots',desc:'Two towers joined at ground level',symbol:'♜'}
+];
+const nameCats={flat:'FLAT BOARD',pyramid:'3D PYRAMID',sculpture:'3D SCULPTURE'};
+const order=['flat','pyramid','sculpture'];
+let categoryFilter='all', currentId='classic', difficulty='medium', generation=0, game=null, selected=null, rotation=0, mirror=false, tilt=0;
+let placements=new Map(), locked=new Set(), undoStack=[], targetMap=new Map(), hoverCell=null, preview=null, hintCells=new Set();
+let cam={yaw:.83,elev:.75,zoom:1.12}, pointer=null, pointerMoved=false, activePointers=new Map(), canvasW=700,canvasH=530, renderCells=[], toastTimeout=null,startTime=Date.now(), elapsedBase=0, solved=false, touchDist=null;
+let solvedIds=new Set();try{solvedIds=new Set(JSON.parse(localStorage.getItem('nodo_solved')||'[]'));}catch(e){}
+const key=p=>p.join(','); const copy=p=>p.slice();
+const randFromSeed=s=>{let a=(s>>>0)||1;return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;}};
+const shuffle=(arr,rng)=>{for(let i=arr.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;};
+function targetFor(id){let pts=[];const add=(x,y,z=0)=>pts.push([x,y,z]);
+ if(id==='starter'||id==='wide'||id==='grid'){let w=id==='starter'?4:id==='wide'?7:11,h=id==='starter'?4:5;for(let y=0;y<h;y++)for(let x=0;x<w;x++)add(x,y);}
+ else if(id==='cross'){for(let y=0;y<7;y++)for(let x=0;x<7;x++)if(Math.abs(x-3)<=1||Math.abs(y-3)<=1)add(x,y);}
+ else if(id==='bridge'){for(let y=0;y<5;y++)for(let x=0;x<7;x++)if(y>=3||x<=1||x>=5)add(x,y);}
+ else if(['mini','medium','classic','steps'].includes(id)){let n=id==='mini'?3:id==='medium'?4:5;for(let z=0;z<(id==='steps'?4:n);z++)for(let y=0;y<n-z;y++)for(let x=0;x<n-z;x++)add(x,y,z);}
+ else if(id==='cube'||id==='tower'){let n=id==='cube'?3:4,h=id==='cube'?3:3;for(let z=0;z<h;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++)add(x,y,z);}
+ else if(id==='citadel'){for(let z=0;z<3;z++)for(let y=0;y<3;y++)for(let x=0;x<6;x++)if(z===0||x<=1||x>=4)add(x,y,z);}
+ return pts;}
+function neighbors(a,b,cat){let dx=Math.abs(a[0]-b[0]),dy=Math.abs(a[1]-b[1]),dz=Math.abs(a[2]-b[2]);if(dz===0)return dx+dy===1;if(dz!==1)return false;if(cat==='pyramid'){let lo=a[2]<b[2]?a:b,hi=lo===a?b:a;return (hi[0]===lo[0]||hi[0]===lo[0]-1)&&(hi[1]===lo[1]||hi[1]===lo[1]-1);}return dx+dy===0;}
+function partition(cells,count,cat,rng){const n=cells.length;let edges=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)if(neighbors(cells[i],cells[j],cat))edges.push([i,j]);
+ const cap=Math.max(5,Math.ceil(n/count)+2);
+ for(let attempt=0;attempt<400;attempt++){
+  const groups=Array.from({length:n},(_,i)=>[i]),ids=Array.from({length:n},(_,i)=>i);let num=n,failed=false;
+  while(num>count){let options=[],min=Infinity;for(const [a,b] of edges){let aId=ids[a],bId=ids[b];if(aId===bId)continue;let sz=groups[aId].length+groups[bId].length;if(sz>cap)continue;if(sz<min)min=sz;options.push([aId,bId,sz]);}
+   if(!options.length){failed=true;break;}
+   const pool=options.filter(o=>o[2]<=min+((attempt%3)===0?2:1));let [i,j]=pool[Math.floor(rng()*pool.length)];
+   if(groups[i].length<groups[j].length)[i,j]=[j,i];for(const cellIndex of groups[j]){ids[cellIndex]=i;groups[i].push(cellIndex);}groups[j]=[];num--;
+  }
+  if(failed)continue;let result=groups.filter(g=>g.length).map(g=>g.map(i=>copy(cells[i])));const sizes=result.map(x=>x.length);if(Math.min(...sizes)>=3&&Math.max(...sizes)<=cap)return shuffle(result,rng);
+ }
+ // Guaranteed connected fallback: connect adjacent singleton components until count groups remain.
+ let groups=cells.map(p=>[p]);while(groups.length>count){let best=[],bestS=Infinity;for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++)if(groups[i].some(a=>groups[j].some(b=>neighbors(a,b,cat)))){let s=groups[i].length+groups[j].length;if(s<bestS){bestS=s;best=[[i,j]];}else if(s===bestS)best.push([i,j]);}if(!best.length)break;let [i,j]=best[Math.floor(rng()*best.length)];groups[i].push(...groups[j]);groups.splice(j,1);}return shuffle(groups,rng);
+}
+function puzzleFor(id,diff,seed){let layout=LAYOUTS.find(l=>l.id===id),cells=targetFor(id);const groupsCount=Math.min(12,Math.max(4,Math.round(cells.length/4.5)));const rng=randFromSeed(seed);let groups=partition(cells,groupsCount,layout.category,rng);let ps=groups.map((coords,i)=>({id:String.fromCharCode(65+i),color:COLORS[i],cells:coords,anchor:coords[0],relative:coords.map(p=>p.map((v,j)=>v-coords[0][j]))}));let starterCount=diff==='easy'?Math.round(ps.length*.52):diff==='medium'?Math.round(ps.length*.25):0;
+ const lockedIds=shuffle(ps.map(p=>p.id),rng).slice(0,starterCount);return{layout,cells,pieces:ps,lockedIds};}
+function buildFilters(){const filters=[['all','All'],['flat','Flat'],['pyramid','Pyramids'],['sculpture','3D shapes']];$('filters').innerHTML=filters.map(([id,n])=>`<button class="filter ${id===categoryFilter?'active':''}" data-filter="${id}">${n}</button>`).join('');$('filters').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{categoryFilter=b.dataset.filter;buildFilters();buildLevels();}));}
+function buildLevels(){$('levelList').innerHTML=LAYOUTS.filter(l=>categoryFilter==='all'||l.category===categoryFilter).map(l=>`<button class="level ${l.id===currentId?'active':''}" data-id="${l.id}"><span class="levelIcon">${l.symbol}</span><span class="levelCopy"><span class="levelName">${l.name}</span><span class="levelMeta">${l.size} · ${l.category==='flat'?'2D':'3D'}</span></span><span class="check">${solvedIds.has(l.id)?'✓':''}</span></button>`).join('');$('levelList').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>loadGame(b.dataset.id,difficulty,false)));}
+function ori(piece){let pts=piece.relative.map(copy);return pts.map(([x0,y0,z0])=>{let x=x0,y=y0,z=z0;
+ if(game.layout.category==='pyramid'){
+  if(tilt%2===1){x=x+z;y=y+z;z=-z;}
+  if(mirror)x=-x-z;
+  for(let n=0;n<rotation;n++){let nx=-y-z;y=x;x=nx;}
+ }else{
+  if(tilt===1){let t=z;z=y;y=-t;}else if(tilt===2){let t=x;x=z;z=-t;}else if(tilt===3){let t=z;z=-z;y=-y;}
+  if(mirror)x=-x;
+  for(let n=0;n<rotation;n++){let t=x;x=-y;y=t;}
+ }
+ return [x,y,z];});}
+function validCells(candidate,ignoreId=null){return candidate.every(p=>targetMap.has(key(p))&&![...placements.entries()].some(([id,entry])=>id!==ignoreId&&entry.cells.some(x=>key(x)===key(p))));}
+function fitAt(piece,anchor){let offs=ori(piece),cs=offs.map(p=>p.map((v,i)=>v+anchor[i]));return {cells:cs,valid:validCells(cs)};}
+function getPreview(piece,target){if(!piece||!target||placements.has(piece.id))return null;const offsets=ori(piece);let options=[];for(const off of offsets){let anchor=target.map((v,i)=>v-off[i]),candidate=fitAt(piece,anchor);if(!candidate.valid)continue;
+  const centroid=candidate.cells.reduce((a,p)=>a.map((v,i)=>v+p[i]),[0,0,0]).map(x=>x/candidate.cells.length);
+  options.push({cells:candidate.cells,anchor,valid:true,dist:Math.hypot(centroid[0]-target[0],centroid[1]-target[1],(centroid[2]-target[2])*1.4)});
+ }
+ if(options.length){options.sort((a,b)=>a.dist-b.dist);return options[0];}
+ let f=fitAt(piece,target);return{...f,anchor:target};}
+function loadGame(id=currentId,diff=difficulty,newSeed=false){currentId=id;difficulty=diff;if(newSeed)generation++;
+ let seed=0x713c41;for(const ch of id)seed=Math.imul(seed^ch.charCodeAt(0),16777619);seed=(seed^(generation*713+{easy:3,medium:7,hard:11}[diff]))>>>0;
+ game=puzzleFor(id,diff,seed);targetMap=new Map(game.cells.map(p=>[key(p),p]));placements.clear();locked=new Set(game.lockedIds);undoStack=[];selected=null;rotation=0;mirror=false;tilt=0;hoverCell=null;preview=null;hintCells.clear();startTime=Date.now();elapsedBase=0;solved=false;
+ for(const piece of game.pieces)if(locked.has(piece.id))placements.set(piece.id,{cells:piece.cells.map(copy),rot:0,mirror:false,tilt:0});
+ $('category').textContent=nameCats[game.layout.category];$('layoutTitle').textContent=game.layout.name;$('subtitle').textContent=game.layout.desc;
+ $('difficulty').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.d===diff));cam={yaw:.83,elev:game.layout.category==='flat'?1.03:.75,zoom:1.12};buildLevels();updateUI();draw();}
+function snapshot(){return new Map([...placements.entries()].map(([id,e])=>[id,{cells:e.cells.map(copy),rot:e.rot,mirror:e.mirror,tilt:e.tilt}]));}
+function pushUndo(){undoStack.push(snapshot());if(undoStack.length>100)undoStack.shift();}
+function setSelected(id){let p=game.pieces.find(p=>p.id===id);if(!p)return;if(locked.has(id)){toast('This starter piece is fixed in place.');return;}
+ if(placements.has(id)){pushUndo();placements.delete(id);selected=id;rotation=0;mirror=false;tilt=0;toast('Piece '+id+' returned to the tray.');}
+ else{selected=id;rotation=0;mirror=false;tilt=0;}
+ hintCells.clear();preview=hoverCell?getPreview(p,hoverCell):null;updateUI();draw();}
+function drawTray(){const used=placements;let n=game.pieces.length;$('pieceCount').textContent=n+' pieces';$('tray').innerHTML=game.pieces.map(p=>{
+ const isUsed=used.has(p.id),isLock=locked.has(p.id),coords=p.relative;const d=(coords.reduce((a,v)=>[Math.min(a[0],v[0]),Math.max(a[1],v[0]),Math.min(a[2],v[1]),Math.max(a[3],v[1])],[Infinity,-Infinity,Infinity,-Infinity]));let wide=Math.max(1,d[1]-d[0]+1),tall=Math.max(1,d[3]-d[2]+1);let s=Math.min(13.5,60/Math.max(wide,tall,2));const svg=coords.map(([x,y,z])=>`<circle cx="${(x-d[0]+.5)*s+10+z*1.5}" cy="${(y-d[2]+.5)*s+6-z*4}" r="${s*.43}" fill="${p.color}" opacity="${z>0?.82:1}"/>`).join('');
+ return `<button class="piece ${selected===p.id?'active':''} ${isUsed?'placed':''} ${isLock?'locked':''}" data-p="${p.id}" aria-label="${isUsed?'Remove':'Select'} piece ${p.id}"><div class="pieceTop"><span style="color:${p.color}">● ${p.id}</span><span class="pieceStatus">${isLock?'FIXED':isUsed?'✓ SET':'FREE'}</span></div><div class="pieceShape"><svg viewBox="0 0 95 64" role="img" aria-label="Piece ${p.id} shape">${svg}</svg></div><div class="pieceLabel">${p.cells.length} spheres</div></button>`;
+ }).join('');$('tray').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setSelected(b.dataset.p)));}
+function updateUI(){if(!game)return;let filled=[...placements.values()].reduce((n,p)=>n+p.cells.length,0),all=game.cells.length,allCount=game.pieces.length;
+ $('filledStat').textContent=filled+' / '+all;$('placedCount').textContent=placements.size;$('totalPieces').textContent=allCount;$('progressBar').style.width=(filled/all*100)+'%';
+ $('status').textContent=solved?'Complete!':selected?`Piece ${selected} selected · ${game.pieces.find(p=>p.id===selected).cells.length} spheres`:`${all-filled} positions remaining`;
+ $('undoBtn').disabled=!undoStack.length;$('tiltBtn').disabled=game.layout.category==='flat';$('rotateBtn').disabled=!selected;$('mirrorBtn').disabled=!selected;$('tiltBtn').disabled=!selected||game.layout.category==='flat';
+ drawTray();}
+function toast(message,bad=false){const el=$('toast');el.textContent=message;el.className='toast show'+(bad?' bad':'');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.className='toast',3000);}
+function complete(){solved=true;solvedIds.add(currentId);try{localStorage.setItem('nodo_solved',JSON.stringify([...solvedIds]));}catch(e){}toast('Puzzle complete! Every sphere is in place. Choose another layout or a harder level.');buildLevels();}
+function attemptPlace(){if(!game)return;if(!hoverCell)return;
+ if(!selected){let entry=[...placements.entries()].find(([id,e])=>!locked.has(id)&&e.cells.some(p=>key(p)===key(hoverCell)));if(entry)setSelected(entry[0]);else toast('Select a coloured piece from the tray first.');return;}
+ let piece=game.pieces.find(p=>p.id===selected);const attempt=getPreview(piece,hoverCell);if(!attempt)return;if(!attempt.valid){toast('That piece does not fit here. Rotate it or choose another socket.',true);return;}
+ pushUndo();placements.set(piece.id,{cells:attempt.cells.map(copy),rot:rotation,mirror,tilt});selected=null;hintCells.clear();hoverCell=null;preview=null;
+ updateUI();draw();if(placements.size===game.pieces.length)complete();}
+function undo(){if(!undoStack.length)return;placements=undoStack.pop();selected=null;hintCells.clear();preview=null;solved=false;updateUI();draw();}
+function hint(){let piece=game.pieces.find(p=>p.id===selected&&!placements.has(p.id))||game.pieces.find(p=>!placements.has(p.id));if(!piece){toast('Everything has already been placed.');return;}
+ let blocked=piece.cells.some(p=>[...placements.values()].some(e=>e.cells.some(q=>key(p)===key(q))));selected=piece.id;rotation=0;mirror=false;tilt=0;hintCells=new Set(piece.cells.map(key));
+ updateUI();draw();toast(blocked?`Hint for ${piece.id} shown in gold; another placed piece is blocking it.`:`The gold outlines show one valid position for piece ${piece.id}.`);}
+function rotatePiece(){if(!selected)return;rotation=(rotation+1)%4;rePreview();}
+function flipPiece(){if(!selected)return;mirror=!mirror;rePreview();}
+function tiltPiece(){if(!selected)return;if(game.layout.category==='flat')return;tilt=(tilt+1)%(game.layout.category==='pyramid'?2:4);rePreview();}
+function rePreview(){let piece=game.pieces.find(p=>p.id===selected);preview=hoverCell?getPreview(piece,hoverCell):null;draw();}
+function worldPos(p){const pyr=game.layout.category==='pyramid';return[p[0]+(pyr?p[2]*.5:0),p[1]+(pyr?p[2]*.5:0),p[2]*(pyr?.78:1.04)];}
+function canvasSize(){let r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);canvasW=Math.max(1,r.width);canvasH=Math.max(1,r.height);let w=Math.round(canvasW*dpr),h=Math.round(canvasH*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.setTransform(dpr,0,0,dpr,0,0);}
+let view=null;
+function setupView(){let raw=game.cells.map(worldPos),lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];for(let p of raw)for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],p[i]);hi[i]=Math.max(hi[i],p[i]);}
+ let center=lo.map((a,i)=>(a+hi[i])/2);let span=Math.max(...lo.map((a,i)=>hi[i]-a+1));let base=Math.min(canvasW/(span*1.85+1),canvasH/(span*1.5+1));
+ let scale=Math.max(18,base*cam.zoom),a=cam.yaw,e=cam.elev,normal=[Math.cos(a)*Math.cos(e),Math.sin(a)*Math.cos(e),Math.sin(e)],right=[-Math.sin(a),Math.cos(a),0],up=[-Math.cos(a)*Math.sin(e),-Math.sin(a)*Math.sin(e),Math.cos(e)];
+ view={center,span,scale,normal,right,up,dist:Math.max(13,span*3.3)};}
+function projectWorld(p){let v=p.map((x,i)=>x-view.center[i]),dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],depth=dot(v,view.normal),pers=view.dist/(view.dist-depth);
+ return{x:canvasW*.5+dot(v,view.right)*view.scale*pers,y:canvasH*.52-dot(v,view.up)*view.scale*pers,depth,r:Math.max(7,view.scale*.40*pers),pers};}
+function project(p){return projectWorld(worldPos(p));}
+const rgba=(hex,a)=>{let n=parseInt(hex.slice(1),16);return`rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;};
+function sphere(x,y,r,color,alpha=1,wire=false){ctx.save();ctx.globalAlpha=alpha;if(wire){ctx.strokeStyle=color;ctx.lineWidth=Math.max(1.4,r*.12);ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(x,y,r*.83,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();return;}
+ let grad=ctx.createRadialGradient(x-r*.3,y-r*.4,r*.04,x,y,r*1.22);grad.addColorStop(0,'#ffffff');grad.addColorStop(.13,color);grad.addColorStop(.66,color);grad.addColorStop(1,'#0b142c');ctx.shadowColor=rgba(color,.28);ctx.shadowBlur=r*.85;ctx.beginPath();ctx.fillStyle=grad;ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.beginPath();ctx.ellipse(x-r*.27,y-r*.34,r*.23,r*.11,-.5,0,Math.PI*2);ctx.fillStyle='#ffffff65';ctx.fill();ctx.restore();}
+function drawLink(a,b,color,alpha=1){ctx.save();ctx.lineCap='round';ctx.lineWidth=Math.min(a.r,b.r)*1.15;ctx.strokeStyle=rgba(color,alpha*.78);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=Math.min(a.r,b.r)*.35;ctx.stroke();ctx.restore();}
+function draw(){if(!game)return;canvasSize();ctx.clearRect(0,0,canvasW,canvasH);setupView();
+ const coords=game.cells.map(p=>({p,k:key(p),...project(p)}));renderCells=coords;
+ const byKey=new Map(coords.map(c=>[c.k,c]));
+ // Dim platform beneath the puzzle (projected into 3D).
+ const bounds=[...game.cells.filter(p=>p[2]===0).map(worldPos)],minx=Math.min(...bounds.map(p=>p[0]))-.53,maxx=Math.max(...bounds.map(p=>p[0]))+.53,miny=Math.min(...bounds.map(p=>p[1]))-.53,maxy=Math.max(...bounds.map(p=>p[1]))+.53;
+ const corners=[[minx,miny,-.48],[maxx,miny,-.48],[maxx,maxy,-.48],[minx,maxy,-.48]].map(projectWorld);
+ ctx.save();ctx.beginPath();corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle='#0e2233aa';ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle='#638ea356';ctx.stroke();ctx.restore();
+ const occupied=new Map();for(const [id,place] of placements){let piece=game.pieces.find(p=>p.id===id);for(let p of place.cells)occupied.set(key(p),{id,color:piece.color,locked:locked.has(id)});}
+ // Soft lines between physically connected spheres of an individual piece.
+ for(const [id,pl] of placements){let col=game.pieces.find(p=>p.id===id).color;for(let i=0;i<pl.cells.length;i++)for(let j=i+1;j<pl.cells.length;j++)if(neighbors(pl.cells[i],pl.cells[j],game.layout.category))drawLink(project(pl.cells[i]),project(pl.cells[j]),col,.76);}
+ if(preview)for(let i=0;i<preview.cells.length;i++)for(let j=i+1;j<preview.cells.length;j++)if(neighbors(preview.cells[i],preview.cells[j],game.layout.category))drawLink(project(preview.cells[i]),project(preview.cells[j]),preview.valid?game.pieces.find(p=>p.id===selected).color:'#ff7187',.38);
+ const drawItems=coords.map(c=>({...c,occ:occupied.get(c.k)}));
+ for(const p of preview?.cells||[])if(!targetMap.has(key(p)))drawItems.push({...project(p),p,k:key(p),out:true});
+ drawItems.sort((a,b)=>a.depth-b.depth);
+ for(let c of drawItems){let isPreview=preview?.cells.some(p=>key(p)===c.k),isHint=hintCells.has(c.k);
+  if(!c.occ){ctx.save();ctx.beginPath();ctx.arc(c.x,c.y,c.r*.81,0,Math.PI*2);ctx.fillStyle='#0b1727d9';ctx.fill();ctx.strokeStyle=isHint?'#ffdb87':isPreview?(preview.valid?'#9affe0':'#ff708c'):'#7894b277';ctx.lineWidth=isHint?2.9:isPreview?2.2:1.15;ctx.setLineDash(isPreview||isHint?[4,3]:[]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(c.x,c.y,Math.max(1.9,c.r*.14),0,Math.PI*2);ctx.fillStyle='#7ea6bb5c';ctx.fill();ctx.restore();}
+  if(c.occ)sphere(c.x,c.y,c.r,c.occ.color,c.occ.locked?.92:1);
+  else if(isPreview){let color=preview.valid?game.pieces.find(p=>p.id===selected).color:'#ff6e87';sphere(c.x,c.y,c.r*.95,color,.58);}
+  if(isHint){ctx.save();ctx.beginPath();ctx.arc(c.x,c.y,c.r*1.13,0,Math.PI*2);ctx.lineWidth=2.6;ctx.strokeStyle='#ffd784';ctx.setLineDash([5,3]);ctx.stroke();ctx.restore();}
+ }
+ // Orbit indicator.
+ const g=ctx.createLinearGradient(0,canvasH*.7,canvasW,canvasH*.7);g.addColorStop(0,'#558db000');g.addColorStop(.5,'#558db022');g.addColorStop(1,'#558db000');ctx.strokeStyle=g;ctx.beginPath();ctx.moveTo(20,canvasH*.8);ctx.lineTo(canvasW-20,canvasH*.8);ctx.stroke();}
+function locate(x,y){let cand=[];for(const p of renderCells){let d=Math.hypot(p.x-x,p.y-y);if(d<Math.max(16,p.r*1.25))cand.push({p,d,score:d/(p.r||1)-p.depth*.011});}cand.sort((a,b)=>a.score-b.score);return cand.length?cand[0].p.p:null;}
+function pointerCoords(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function updateHover(e){let pt=pointerCoords(e);hoverCell=locate(pt.x,pt.y);if(selected){let piece=game.pieces.find(p=>p.id===selected);preview=getPreview(piece,hoverCell);}else preview=null;draw();}
+function pinchDistance(){let pts=[...activePointers.values()];return pts.length<2?null:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);}
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;canvas.setPointerCapture(e.pointerId);activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(activePointers.size>1){touchDist=pinchDistance();pointerMoved=true;pointer=null;return;}
+ pointer={id:e.pointerId,x:e.clientX,y:e.clientY,prevX:e.clientX,prevY:e.clientY};pointerMoved=false;});
+canvas.addEventListener('pointermove',e=>{if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(activePointers.size>=2){let next=pinchDistance();if(touchDist&&next){cam.zoom=Math.max(.48,Math.min(2.5,cam.zoom*(next/touchDist)));}touchDist=next;hoverCell=null;preview=null;draw();return;}
+ if(pointer&&pointer.id===e.pointerId){let dx=e.clientX-pointer.prevX,dy=e.clientY-pointer.prevY;pointer.prevX=e.clientX;pointer.prevY=e.clientY;if(Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)>6)pointerMoved=true;if(pointerMoved){cam.yaw-=dx*.008;cam.elev=Math.max(.12,Math.min(1.48,cam.elev+dy*.007));hoverCell=null;preview=null;draw();return;}}
+ updateHover(e);});
+canvas.addEventListener('pointerup',e=>{let wasSingle=activePointers.size===1;activePointers.delete(e.pointerId);touchDist=pinchDistance();
+ if(wasSingle&&pointer&&pointer.id===e.pointerId&&!pointerMoved){let pt=pointerCoords(e);hoverCell=locate(pt.x,pt.y);attemptPlace();}
+ pointer=null;pointerMoved=false;draw();});
+canvas.addEventListener('pointercancel',e=>{activePointers.delete(e.pointerId);touchDist=pinchDistance();pointer=null;pointerMoved=false;});
+canvas.addEventListener('pointerleave',()=>{if(!pointer&&!activePointers.size){hoverCell=null;preview=null;draw();}});
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.zoom=Math.max(.48,Math.min(2.5,cam.zoom*(e.deltaY<0?1.095:.915)));draw();},{passive:false});
+$('viewBtn').addEventListener('click',()=>{cam={yaw:.83,elev:game.layout.category==='flat'?1.03:.75,zoom:1.12};hoverCell=null;preview=null;draw();});$('rotateBtn').addEventListener('click',rotatePiece);$('mirrorBtn').addEventListener('click',flipPiece);$('tiltBtn').addEventListener('click',tiltPiece);$('undoBtn').addEventListener('click',undo);$('hintBtn').addEventListener('click',hint);$('resetBtn').addEventListener('click',()=>loadGame(currentId,difficulty,false));$('newBtn').addEventListener('click',()=>{loadGame(currentId,difficulty,true);toast('New solvable challenge generated.');});
+$('difficulty').addEventListener('click',e=>{let b=e.target.closest('button[data-d]');if(b)loadGame(currentId,b.dataset.d,false);});
+$('helpBtn').addEventListener('click',()=>$('helpModal').classList.add('open'));$('closeModal').addEventListener('click',()=>$('helpModal').classList.remove('open'));$('helpModal').addEventListener('click',e=>{if(e.target===$('helpModal'))$('helpModal').classList.remove('open');});
+window.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))return;if($('helpModal').classList.contains('open')){if(e.key==='Escape')$('helpModal').classList.remove('open');return;}let k=e.key.toLowerCase();if(k==='r')rotatePiece();else if(k==='f')flipPiece();else if(k==='t')tiltPiece();else if(k==='z')undo();});
+window.addEventListener('resize',draw);if(typeof ResizeObserver!=='undefined')new ResizeObserver(draw).observe($('stage'));
+setInterval(()=>{if(!solved&&game){let n=Math.floor((Date.now()-startTime+elapsedBase)/1000),m=Math.floor(n/60),s=n%60;$('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}},1000);
+window.__NODO_DEBUG={layouts:LAYOUTS,targetFor,puzzleFor,partition,neighbors,getState:()=>({id:currentId,pieces:game?.pieces.length,cells:game?.cells.length,placed:placements.size,locked:locked.size,selected,valid:game?game.pieces.every(p=>p.cells.every(c=>targetMap.has(key(c)))):false}),select:setSelected,load:loadGame,hint,undo,complete,showSolution:()=>{for(let p of game.pieces)if(!placements.has(p.id))placements.set(p.id,{cells:p.cells.map(copy),rot:0,mirror:false,tilt:0});updateUI();draw();complete();}};
+ buildFilters();loadGame();
+})();
+</script>
+</body>
+</html>
